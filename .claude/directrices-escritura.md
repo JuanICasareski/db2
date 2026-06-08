@@ -81,6 +81,9 @@ Mas patrones detectados:
   cada parrafo.
 - Separadores horizontales (`---`) entre secciones: no usarlos. Los
   encabezados ya separan. Las rayitas que dibujan dan aspecto de plantilla.
+- Encabezado minimo: el bloque de encabezado lleva solo el titulo del TP, el
+  grupo y los integrantes. No incluir subtitulo descriptivo, materia, clase
+  ni fecha (ni "Fecha:" ni "Fecha de elaboracion").
 - Resumir en cada nivel (la idea se repite en intro, cuerpo y cierre) y
   estirar un solo punto reformulandolo diez veces.
 
@@ -99,6 +102,32 @@ Lo relevante para resolver TPs:
 - Preferir verbos fuertes a sustantivo + verbo vacio ("decidir" mejor que
   "tomar una decision").
 - Revisar y reescribir antes de entregar.
+
+## Encabezado del TP
+
+Formato fijo, igual en todos los TPs:
+
+- Titulo como `# Resolucion de la Actividad N: Clase Virtual NN` (heading 1).
+- Linea `Grupo N`.
+- Linea `Integrantes:` seguida de una lista con vinetas, un integrante por
+  vineta, en formato `Apellido, Nombre, legajo NNNNNNN, email@uade.edu.ar`.
+- Emails en minuscula. Orden alfabetico por apellido.
+- Nada mas: sin subtitulo descriptivo, materia, clase ni fecha.
+
+Ejemplo:
+
+```markdown
+# Resolucion de la Actividad 4: Clase Virtual 02
+
+Grupo 4
+
+Integrantes:
+
+- Avila, Aldana, legajo 1193721, alavila@uade.edu.ar
+- Caivano, Alexander Francisco, legajo 1209389, acaivano@uade.edu.ar
+- Casareski, Juan Ignacio, legajo 1176109, jcasareski@uade.edu.ar
+- Segura, Juan Ignacio, legajo 1242159, jsegura@uade.edu.ar
+```
 
 ## Estructura de la resolucion
 

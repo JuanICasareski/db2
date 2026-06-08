@@ -11,18 +11,15 @@ Grupo 4. Integrantes (apellido, nombre, legajo, email):
 - Casareski, Juan Ignacio, 1176109, jcasareski@uade.edu.ar
 - Segura, Juan Ignacio, 1242159, jsegura@uade.edu.ar
 
-Materia: Ingenieria de Datos II. Clase 02: Sistemas Distribuidos y
-Fundamentos NoSQL.
-
-Completar el encabezado de cada TP con estos datos. Emails siempre en
-minuscula.
+El encabezado de cada TP lleva solo el titulo, el grupo y los integrantes
+(sin subtitulo, materia, clase ni fecha). Emails siempre en minuscula.
 
 ## Avisar si falta algun dato
 
 Antes de generar o entregar un TP, si falta algun dato del encabezado
-(grupo, integrantes, legajo, fecha) o quedo un placeholder tipo
-`[Completar...]`, avisarlo en vez de inventar o dejar el hueco. No entregar
-con datos faltantes sin avisar.
+(grupo, integrantes, legajo) o quedo un placeholder tipo `[Completar...]`,
+avisarlo en vez de inventar o dejar el hueco. No entregar con datos
+faltantes sin avisar. La fecha no es un dato del encabezado: no se pone.
 
 ## Directrices siempre activas
 

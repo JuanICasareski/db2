@@ -1,14 +1,13 @@
 # Resolución de la Actividad 3: Clase Virtual 02
 
-Análisis CAP y consistencia distribuida aplicado a FlowOps  
-Materia: Ingeniería de Datos II  
-Clase 02: Sistemas Distribuidos y Fundamentos NoSQL  
-Grupo: 4  
-Integrantes:  
-Avila, Aldana, legajo 1193721, alavila@uade.edu.ar  
-Caivano, Alexander Francisco, legajo 1209389, acaivano@uade.edu.ar  
-Casareski, Juan Ignacio, legajo 1176109, jcasareski@uade.edu.ar  
-Segura, Juan Ignacio, legajo 1242159, jsegura@uade.edu.ar
+Grupo 4
+
+Integrantes:
+
+- Avila, Aldana, legajo 1193721, alavila@uade.edu.ar
+- Caivano, Alexander Francisco, legajo 1209389, acaivano@uade.edu.ar
+- Casareski, Juan Ignacio, legajo 1176109, jcasareski@uade.edu.ar
+- Segura, Juan Ignacio, legajo 1242159, jsegura@uade.edu.ar
 
 ## 1. Identificación de componentes críticos (Parte A)
 
