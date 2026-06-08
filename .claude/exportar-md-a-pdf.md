@@ -13,6 +13,22 @@ Con esos paquetes alcanza para `xelatex`, `fontspec` y el flujo de abajo.
 No hace falta `texlive-latexextra` (ese trae `newunicodechar` y otros
 extras que aca se evitan a proposito).
 
+## Antes de generar: revisar el texto
+
+Paso obligatorio antes de correr pandoc. El PDF no arregla el contenido, solo
+lo formatea. Revisar el `.md` contra las directrices de escritura, en
+particular las marcas que se cuelan seguido:
+
+- Em-dashes (`—`) y en-dashes (`–`): no van. Reemplazar por dos puntos, coma,
+  parentesis o guion comun segun el caso. Detectar con
+  `grep -nE '—|–' *.md`.
+- Negrita inline salpicada (`**termino**` suelto): sacarla, dejar negrita
+  solo en encabezados.
+- Metacontenido ("Documento preparado para", "Fecha de elaboracion",
+  ponderaciones), acotaciones de autoevaluacion y separadores `---`: fuera.
+
+Recien despues de esa revision, generar el PDF.
+
 ## Conversion basica
 
 ```bash

@@ -1,8 +1,8 @@
-# Resolución de la Actividad 3 — Clase Virtual 02
+# Resolución de la Actividad 3: Clase Virtual 02
 
 Análisis CAP y consistencia distribuida aplicado a FlowOps  
 Materia: Ingeniería de Datos II  
-Clase: 02 — Sistemas Distribuidos y Fundamentos NoSQL  
+Clase 02: Sistemas Distribuidos y Fundamentos NoSQL  
 Grupo: [Completar con el nombre del grupo]
 
 ## 1. Identificación de componentes críticos (Parte A)
@@ -65,7 +65,7 @@ Grupo: [Completar con el nombre del grupo]
 
 ## 4. Análisis de situaciones problemáticas (Parte D)
 
-### Escenario 1 — Tarea humana completada dos veces
+### Escenario 1: Tarea humana completada dos veces
 Un aprobador hace clic dos veces en “Aprobar” porque la pantalla tarda en responder. El sistema recibe dos solicitudes casi simultáneas.
 
 Preguntas:
@@ -87,7 +87,7 @@ Riesgo: Doble ejecución de efectos colaterales (notificaciones enviadas dos vec
 Decisión recomendada: Hacer la operación idempotente + optimistic concurrency control.  
 Impacto en FlowOps: Protege especialmente procesos críticos como tenant_beta (aprobación de compras).
 
-### Escenario 2 — Lectura desactualizada del estado
+### Escenario 2: Lectura desactualizada del estado
 Un usuario consulta una instancia y ve que está “pendiente”, pero otro usuario la aprobó hace pocos segundos.
 
 Preguntas:
@@ -105,7 +105,7 @@ Preguntas:
    > "El estado puede estar actualizándose. Última sincronización: hace 6 segundos.  
    > Este dato puede no reflejar la versión más reciente. Haz clic en 'Refrescar' para actualizar."
 
-### Escenario 3 — Partición de red entre nodos
+### Escenario 3: Partición de red entre nodos
 Una parte del sistema puede recibir eventos, pero no puede comunicarse con el nodo que mantiene el estado actual de la instancia.
 
 Preguntas:
@@ -122,7 +122,7 @@ Preguntas:
 4. ¿Qué datos deberían reconciliarse luego?  
    Eventos encolados en la partición aislada + replay ordenado por timestamp/vector clock + detección y resolución de conflictos (ej. dos transiciones sobre el mismo nodo).
 
-### Escenario 4 — Configuración de proceso modificada durante una ejecución
+### Escenario 4: Configuración de proceso modificada durante una ejecución
 Un administrador cambia la definición del proceso mientras hay instancias en curso.
 
 Preguntas:

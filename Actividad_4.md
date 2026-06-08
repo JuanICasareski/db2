@@ -1,8 +1,8 @@
-# Resolución de la Actividad 4 — Clase Virtual 02
+# Resolución de la Actividad 4: Clase Virtual 02
 
 Particionamiento, replicación y escalabilidad para el TPO FlowOps
 Materia: Ingeniería de Datos II
-Clase: 02 — Sistemas Distribuidos y Fundamentos NoSQL
+Clase 02: Sistemas Distribuidos y Fundamentos NoSQL
 Grupo: [Completar con el nombre del grupo]
 Fecha: 7 de junio de 2026
 
@@ -17,7 +17,7 @@ Fecha: 7 de junio de 2026
 | Usuarios concurrentes promedio | 300 | 2.000 |
 | Pico de eventos por segundo | 300 | 2.000 |
 
-## 1. Parte A — Estimación de volumen
+## 1. Parte A: Estimación de volumen
 
 ### Cálculos
 
@@ -45,9 +45,9 @@ Crecimiento relativo (proyectado / inicial)
 |---|---:|---:|---|
 | Tenants activos | 50 | 300 | Crecimiento 6× |
 | Instancias diarias totales | 10.000 | 240.000 | Crecimiento 24× |
-| Eventos diarios totales | 150.000 | 6.000.000 | Crecimiento 40× — el dato que más crece |
+| Eventos diarios totales | 150.000 | 6.000.000 | Crecimiento 40×: el dato que más crece |
 | Eventos mensuales aproximados | 4.500.000 | 180.000.000 | Considerar 30 días |
-| Pico de eventos por segundo | 300 | 2.000 | Crecimiento ≈6,7× — presión sobre el motor de escritura |
+| Pico de eventos por segundo | 300 | 2.000 | Crecimiento ≈6,7×: presión sobre el motor de escritura |
 
 ### Respuestas a las preguntas
 
@@ -61,12 +61,12 @@ El subsistema de eventos, por dos motivos: (1) volumen acumulado (180 M/mes ≈ 
 Eventos e instancias, porque son los de mayor volumen y escritura. Conviene diseñarlos particionados por `tenant_id` (+ `instance_id` / `created_at`) desde el día uno para evitar una migración costosa después.
 
 ¿Qué datos podrían permanecer centralizados en una primera versión?
-- Definiciones de proceso (500–7.500 documentos, bajo volumen, lectura intensiva pero cacheable).
-- Configuración de tenants (50–300 registros).
+- Definiciones de proceso (500-7.500 documentos, bajo volumen, lectura intensiva pero cacheable).
+- Configuración de tenants (50-300 registros).
 - Métricas agregadas (se derivan de eventos y pueden recalcularse).
 Pueden vivir centralizadas/replicadas sin particionar en la etapa inicial.
 
-## 2. Parte B — Estrategia de particionamiento
+## 2. Parte B: Estrategia de particionamiento
 
 | Tipo de dato | Clave candidata | Estrategia de particionamiento | Justificación |
 |---|---|---|---|
@@ -99,9 +99,9 @@ Todas las scoped por tenant: listar procesos del tenant, instancias activas del 
 - Reconstruir el historial completo de una instancia si sus eventos quedaron repartidos por timestamp en muchas particiones.
 - Cualquier consulta que no incluya la clave de partición → se convierte en un scan de todas las particiones.
 
-## 3. Parte C — Análisis de hotspots
+## 3. Parte C: Análisis de hotspots
 
-### Caso 1 — Tenant dominante (un tenant genera el 40% de los eventos)
+### Caso 1: Tenant dominante (un tenant genera el 40% de los eventos)
 
 1. ¿Qué partición se sobrecarga? La partición asignada al `hash(tenant_id)` de ese tenant: concentra el 40% de las escrituras de eventos en un solo nodo.
 2. ¿Particionar solo por `tenant_id` sigue siendo suficiente? No. Con esa clave todos los datos del tenant caen en la misma partición → hotspot garantizado.
@@ -111,20 +111,20 @@ Todas las scoped por tenant: listar procesos del tenant, instancias activas del 
    - Fecha: útil como sub-partición secundaria para archivado/consultas temporales.
    - Tipo de evento: descartado como clave de partición (baja cardinalidad → vuelve a generar hotspots).
 
-### Caso 2 — Proceso masivo (un proceso de reclamos genera muchas instancias en un día)
+### Caso 2: Proceso masivo (un proceso de reclamos genera muchas instancias en un día)
 
 1. ¿Conviene particionar por `process_id`? No como clave primaria: concentraría todas las instancias de ese proceso en una partición (mismo problema de hotspot). Mejor mantener `tenant_id + instance_id` y usar `process_id` como índice secundario.
 2. ¿Qué problema aparece si se consulta todo el historial de una instancia? Si los eventos están particionados por hash/tiempo, el historial completo puede quedar repartido en varias particiones → consulta multi-shard más lenta. Se mitiga agrupando los eventos por `instance_id` (clustering) para que el historial de una instancia quede contiguo.
 3. ¿Cómo equilibrar consultas rápidas por instancia y distribución de escritura? Clave compuesta `(tenant_id, instance_id)` como partición + `timestamp` como clustering key: la escritura se reparte por instancia (alta concurrencia) y la lectura del historial de una instancia es secuencial dentro de su partición (rápida). Es el patrón clásico de Cassandra para event logs.
 
-### Caso 3 — Eventos históricos (la auditoría crece indefinidamente)
+### Caso 3: Eventos históricos (la auditoría crece indefinidamente)
 
 1. ¿Qué estrategia para distribuir eventos por tiempo? Partición temporal por rangos (ej. por mes: `eventos_2026_06`), combinada con el hash por instancia. Permite "rotar" particiones y mover las viejas a almacenamiento frío.
-2. ¿Qué datos deberían quedar en almacenamiento activo (hot)? Eventos recientes (últimos 30–90 días) y eventos de instancias en curso, que se consultan para operar y debuggear.
+2. ¿Qué datos deberían quedar en almacenamiento activo (hot)? Eventos recientes (últimos 30-90 días) y eventos de instancias en curso, que se consultan para operar y debuggear.
 3. ¿Qué datos podrían archivarse (cold)? Eventos de instancias ya finalizadas y con más de N meses de antigüedad → mover a almacenamiento de bajo costo (object storage / cold tier), manteniendo solo metadatos indexados.
 4. ¿Qué consultas deberían seguir siendo eficientes? (a) Historial de una instancia activa, (b) eventos recientes de un tenant, (c) consultas por ventana temporal reciente. El particionado temporal garantiza que estas consultas toquen pocas particiones calientes.
 
-## 4. Parte D — Replicación y clustering conceptual
+## 4. Parte D: Replicación y clustering conceptual
 
 | Componente | Tipo de replicación sugerida | Motivo |
 |---|---|---|
@@ -148,7 +148,7 @@ Híbrida: Active-Passive (master-slave) para los datos consistentes + Active-Act
 3. ¿Cuál es más realista para una primera versión del TPO? Active-passive (master-slave) para todo: es la más simple de implementar y razonar, suficiente para el volumen inicial (50 tenants), y permite evolucionar hacia híbrida después.
 4. ¿Qué topología NO implementarían todavía y por qué? Active-active multi-región con resolución de conflictos (CRDTs / merge complejo): añade complejidad operativa (detección y resolución de conflictos, latencia inter-región) injustificada para la etapa inicial. Se difiere hasta tener escala real y SLAs que lo exijan.
 
-## 5. Parte E — Parámetros N, R, W
+## 5. Parte E: Parámetros N, R, W
 
 Recordatorio: con R + W > N se garantiza solapamiento de quórums de lectura y escritura → consistencia fuerte. Con R + W ≤ N → consistencia eventual (mayor disponibilidad/rendimiento).
 
@@ -190,7 +190,7 @@ Recordatorio: con R + W > N se garantiza solapamiento de quórums de lectura y e
 - ¿Qué configuración para evitar pérdida de auditoría? N=3 con W≥1 (idealmente W=2 para durabilidad ante fallo): muchas réplicas garantizan que el evento sobreviva aunque caiga un nodo.
 - ¿Qué configuración para dashboards operativos? N=2, R=1, W=1 → eventual, rápida y barata; los números pueden recalcularse desde el event log.
 
-## 6. Parte F — Plan preliminar de escalabilidad
+## 6. Parte F: Plan preliminar de escalabilidad
 
 | Etapa | Escenario | Estrategia de escalamiento | Riesgo principal | Acción preventiva |
 |---|---|---|---|---|
@@ -200,7 +200,7 @@ Recordatorio: con R + W > N se garantiza solapamiento de quórums de lectura y e
 
 Consideraciones transversales aplicadas: escalamiento vertical (etapa 1) → horizontal (2 y 3); separación por componentes (cada subsistema en su motor); crecimiento del event log mitigado con tiering y archivado; lecturas frecuentes de estado servidas por réplicas/cache (Redis); escrituras masivas de eventos absorbidas por motor columnar con W bajo; particiones calientes mitigadas con claves compuestas y consistent hashing; rebalanceo dinámico en etapa 3.
 
-## 7. Parte G — Arquitectura distribuida conceptual
+## 7. Parte G: Arquitectura distribuida conceptual
 
 ```
                       Cliente / Frontend (Web, Postman, Swagger)
