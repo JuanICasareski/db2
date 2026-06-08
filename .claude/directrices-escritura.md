@@ -73,6 +73,14 @@ Mas patrones detectados:
 - Formato: no arrancar cada vineta con texto en negrita, no decorar con
   flechas (->) ni caracteres especiales, no abusar de parrafos de una sola
   oracion para dar enfasis.
+- Negrita inline salpicada: marcar terminos sueltos en mitad de una oracion
+  (`**Consistency**`, `**idempotente**`, `**tenant_beta**`, `**Si**`,
+  `**Alta**`) es una marca tipica de IA. Un TP humano casi no usa negrita.
+  Dejarla solo para encabezados. En el cuerpo y las tablas, texto plano. Si
+  algo necesita destacarse de verdad, una vez y por algo concreto, no en
+  cada parrafo.
+- Separadores horizontales (`---`) entre secciones: no usarlos. Los
+  encabezados ya separan. Las rayitas que dibujan dan aspecto de plantilla.
 - Resumir en cada nivel (la idea se repite en intro, cuerpo y cierre) y
   estirar un solo punto reformulandolo diez veces.
 
@@ -100,6 +108,24 @@ Lo relevante para resolver TPs:
 4. Justificar las decisiones tecnicas cuando la consigna lo pide.
 5. Sin firmas, sin "generado por IA", sin emojis salvo pedido explicito.
 
+No agregar metacontenido sobre el propio documento. El trabajo termina en
+la resolucion o la conclusion. Nada de bloques tipo:
+
+- "Documento preparado para: entrega de N paginas / exposicion de N min".
+- "Fecha de elaboracion: ...".
+- "Cumple con todos los criterios de evaluacion" o listas de ponderaciones
+  del enunciado (volumen 15%, particionamiento 25%, etc.).
+- Notas, aclaraciones o contrapuntos al margen (blockquotes meta) que
+  comentan el trabajo en vez de resolver la consigna.
+- Acotaciones de autoevaluacion al final de una explicacion: "Ejemplo
+  esperado cumplido", "esto cumple lo pedido", "tal como pide la consigna",
+  "respuesta esperada". Solo van si la consigna las pide de forma
+  explicita.
+
+Esa informacion es para el alumno, no parte de la entrega. Si hace falta
+dejarla, va en un comentario o archivo aparte, no en el `.md` que se
+exporta a PDF.
+
 ## Espanol
 
 - Escribir con tildes correctas y de forma consistente.
@@ -115,3 +141,6 @@ Lo relevante para resolver TPs:
 - [ ] Codigo y consultas en bloques con lenguaje.
 - [ ] Tildes correctas.
 - [ ] Sin palabras innecesarias.
+- [ ] Sin metacontenido ("Documento preparado para", "Fecha de
+      elaboracion", ponderaciones del enunciado, notas al margen).
+- [ ] Sin negrita inline salpicada; negrita solo en encabezados.
