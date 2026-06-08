@@ -129,6 +129,26 @@ Integrantes:
 - Segura, Juan Ignacio, legajo 1242159, jsegura@uade.edu.ar
 ```
 
+## Preguntas y respuestas
+
+Cuando un punto se resuelve respondiendo preguntas, la pregunta va en su
+linea y la respuesta en la linea siguiente. Nunca en el mismo renglon ni
+con flecha.
+
+```markdown
+1. ¿Pregunta?
+   Respuesta en la linea de abajo.
+```
+
+En Markdown, dos lineas seguidas sin salto duro se renderizan pegadas (la
+respuesta termina al lado de la pregunta). Para que queden en lineas
+separadas, cerrar la pregunta con dos espacios al final (salto duro) o
+dejar una linea en blanco entre pregunta y respuesta. Revisar el PDF: si la
+respuesta aparece pegada a la pregunta, falta el salto.
+
+Evitar: `¿Pregunta? respuesta` en el mismo renglon, y
+`¿Pregunta? → respuesta` con flecha.
+
 ## Estructura de la resolucion
 
 1. Encabezado con el TP y la consigna o numero de ejercicio.
@@ -173,3 +193,5 @@ exporta a PDF.
 - [ ] Sin metacontenido ("Documento preparado para", "Fecha de
       elaboracion", ponderaciones del enunciado, notas al margen).
 - [ ] Sin negrita inline salpicada; negrita solo en encabezados.
+- [ ] Preguntas y respuestas en lineas separadas (pregunta, abajo la
+      respuesta), no pegadas ni con flecha.

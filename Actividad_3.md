@@ -50,11 +50,16 @@ Integrantes:
 
 ### Preguntas guía respondidas
 
-- ¿Qué componente debería evitar lecturas inconsistentes? → Estado actual de instancia y Tareas humanas.
-- ¿Dónde es preferible responder aunque el dato no sea el último? → Métricas operativas y Configuración visual del tenant.
-- ¿Qué ocurre si durante una partición de red no se puede confirmar el estado actual? → Se prioriza Consistency (CP): mejor bloquear el avance de la instancia que generar un estado inválido.
-- ¿Qué componente puede reconstruirse a partir de eventos? → Métricas operativas (y parcialmente el estado de instancia mediante event sourcing ligero).
-- ¿Qué componente debería bloquearse antes que aceptar una decisión incorrecta? → Estado actual de instancia y Tareas humanas.
+- ¿Qué componente debería evitar lecturas inconsistentes?  
+  Estado actual de instancia y Tareas humanas.
+- ¿Dónde es preferible responder aunque el dato no sea el último?  
+  Métricas operativas y Configuración visual del tenant.
+- ¿Qué ocurre si durante una partición de red no se puede confirmar el estado actual?  
+  Se prioriza Consistency (CP): mejor bloquear el avance de la instancia que generar un estado inválido.
+- ¿Qué componente puede reconstruirse a partir de eventos?  
+  Métricas operativas (y parcialmente el estado de instancia mediante event sourcing ligero).
+- ¿Qué componente debería bloquearse antes que aceptar una decisión incorrecta?  
+  Estado actual de instancia y Tareas humanas.
 
 ## 3. Modelos de consistencia (Parte C)
 

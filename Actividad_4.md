@@ -54,13 +54,13 @@ Crecimiento relativo (proyectado / inicial)
 
 ### Respuestas a las preguntas
 
-¿Qué datos crecerán más rápido?
+¿Qué datos crecerán más rápido?  
 Los eventos de auditoría (40×), seguidos de las instancias (24×). Crecen mucho más rápido que los tenants (6×) porque su volumen es multiplicativo: más tenants × más instancias por tenant × más eventos por instancia. Las definiciones de proceso crecen lento (de 500 a 7.500) y se mantienen estables tras su publicación.
 
-¿Qué componente podría convertirse en cuello de botella?
+¿Qué componente podría convertirse en cuello de botella?  
 El subsistema de eventos, por dos motivos: (1) volumen acumulado (180 M/mes ≈ 2.190 M/año, crece indefinidamente) y (2) pico de escritura (2.000 eventos/seg). Es un workload write-intensive que un único nodo relacional no absorbe. En segundo lugar, las lecturas de estado de instancia por la concurrencia de usuarios (2.000 concurrentes).
 
-¿Qué datos deberían particionarse desde el inicio?
+¿Qué datos deberían particionarse desde el inicio?  
 Eventos e instancias, porque son los de mayor volumen y escritura. Conviene diseñarlos particionados por `tenant_id` (+ `instance_id` / `created_at`) desde el día uno para evitar una migración costosa después.
 
 ¿Qué datos podrían permanecer centralizados en una primera versión?
@@ -82,10 +82,10 @@ Pueden vivir centralizadas/replicadas sin particionar en la etapa inicial.
 
 ### Preguntas guía
 
-1. ¿Particionar por `tenant_id` alcanza?
+1. ¿Particionar por `tenant_id` alcanza?  
 Como estrategia base, sí: el dominio es multi-tenant y casi toda consulta está scoped por tenant, lo que da localidad y evita cross-shard. Pero no alcanza por sí sola cuando un tenant concentra mucho tráfico (ver Parte C): ahí hay que sub-particionar dentro del tenant.
 
-2. ¿Qué riesgo aparece si un tenant genera mucho más tráfico que los demás?
+2. ¿Qué riesgo aparece si un tenant genera mucho más tráfico que los demás?  
 Hot partition / skew: la partición de ese tenant recibe desproporcionadamente más escrituras y lecturas, saturando ese nodo mientras los demás están ociosos. Rompe el balanceo y degrada la latencia global.
 
 3. ¿Cómo evitarían hot partitions?
@@ -94,7 +94,7 @@ Hot partition / skew: la partición de ese tenant recibe desproporcionadamente m
 - Salting / bucketing del tenant dominante (sufijo de bucket en la clave).
 - Sub-partición temporal para los eventos.
 
-4. ¿Qué consultas se benefician de particionar por `tenant_id`?
+4. ¿Qué consultas se benefician de particionar por `tenant_id`?  
 Todas las scoped por tenant: listar procesos del tenant, instancias activas del tenant, tareas pendientes por rol, eventos de una instancia. Se resuelven dentro de una sola partición (single-shard), con baja latencia y sin scatter-gather.
 
 5. ¿Qué consultas se complican si los datos quedan demasiado distribuidos?
@@ -106,9 +106,12 @@ Todas las scoped por tenant: listar procesos del tenant, instancias activas del 
 
 ### Caso 1: Tenant dominante (un tenant genera el 40% de los eventos)
 
-1. ¿Qué partición se sobrecarga? La partición asignada al `hash(tenant_id)` de ese tenant: concentra el 40% de las escrituras de eventos en un solo nodo.
-2. ¿Particionar solo por `tenant_id` sigue siendo suficiente? No. Con esa clave todos los datos del tenant caen en la misma partición → hotspot garantizado.
-3. ¿Qué segunda clave agregarían? Una clave compuesta que reparta *dentro* del tenant: `tenant_id + instance_id` (o `+ hash de instancia`), de modo que las miles de instancias del tenant grande se distribuyan entre varias particiones.
+1. ¿Qué partición se sobrecarga?  
+   La partición asignada al `hash(tenant_id)` de ese tenant: concentra el 40% de las escrituras de eventos en un solo nodo.
+2. ¿Particionar solo por `tenant_id` sigue siendo suficiente?  
+   No. Con esa clave todos los datos del tenant caen en la misma partición → hotspot garantizado.
+3. ¿Qué segunda clave agregarían?  
+   Una clave compuesta que reparta *dentro* del tenant: `tenant_id + instance_id` (o `+ hash de instancia`), de modo que las miles de instancias del tenant grande se distribuyan entre varias particiones.
 4. ¿Usarían fecha, hash de instancia, tipo de evento u otra clave?
    - Hash de instancia: mejor para repartir escritura de forma uniforme (recomendado para eventos).
    - Fecha: útil como sub-partición secundaria para archivado/consultas temporales.
@@ -116,16 +119,23 @@ Todas las scoped por tenant: listar procesos del tenant, instancias activas del 
 
 ### Caso 2: Proceso masivo (un proceso de reclamos genera muchas instancias en un día)
 
-1. ¿Conviene particionar por `process_id`? No como clave primaria: concentraría todas las instancias de ese proceso en una partición (mismo problema de hotspot). Mejor mantener `tenant_id + instance_id` y usar `process_id` como índice secundario.
-2. ¿Qué problema aparece si se consulta todo el historial de una instancia? Si los eventos están particionados por hash/tiempo, el historial completo puede quedar repartido en varias particiones → consulta multi-shard más lenta. Se mitiga agrupando los eventos por `instance_id` (clustering) para que el historial de una instancia quede contiguo.
-3. ¿Cómo equilibrar consultas rápidas por instancia y distribución de escritura? Clave compuesta `(tenant_id, instance_id)` como partición + `timestamp` como clustering key: la escritura se reparte por instancia (alta concurrencia) y la lectura del historial de una instancia es secuencial dentro de su partición (rápida). Es el patrón clásico de Cassandra para event logs.
+1. ¿Conviene particionar por `process_id`?  
+   No como clave primaria: concentraría todas las instancias de ese proceso en una partición (mismo problema de hotspot). Mejor mantener `tenant_id + instance_id` y usar `process_id` como índice secundario.
+2. ¿Qué problema aparece si se consulta todo el historial de una instancia?  
+   Si los eventos están particionados por hash/tiempo, el historial completo puede quedar repartido en varias particiones → consulta multi-shard más lenta. Se mitiga agrupando los eventos por `instance_id` (clustering) para que el historial de una instancia quede contiguo.
+3. ¿Cómo equilibrar consultas rápidas por instancia y distribución de escritura?  
+   Clave compuesta `(tenant_id, instance_id)` como partición + `timestamp` como clustering key: la escritura se reparte por instancia (alta concurrencia) y la lectura del historial de una instancia es secuencial dentro de su partición (rápida). Es el patrón clásico de Cassandra para event logs.
 
 ### Caso 3: Eventos históricos (la auditoría crece indefinidamente)
 
-1. ¿Qué estrategia para distribuir eventos por tiempo? Partición temporal por rangos (ej. por mes: `eventos_2026_06`), combinada con el hash por instancia. Permite "rotar" particiones y mover las viejas a almacenamiento frío.
-2. ¿Qué datos deberían quedar en almacenamiento activo (hot)? Eventos recientes (últimos 30-90 días) y eventos de instancias en curso, que se consultan para operar y debuggear.
-3. ¿Qué datos podrían archivarse (cold)? Eventos de instancias ya finalizadas y con más de N meses de antigüedad → mover a almacenamiento de bajo costo (object storage / cold tier), manteniendo solo metadatos indexados.
-4. ¿Qué consultas deberían seguir siendo eficientes? (a) Historial de una instancia activa, (b) eventos recientes de un tenant, (c) consultas por ventana temporal reciente. El particionado temporal garantiza que estas consultas toquen pocas particiones calientes.
+1. ¿Qué estrategia para distribuir eventos por tiempo?  
+   Partición temporal por rangos (ej. por mes: `eventos_2026_06`), combinada con el hash por instancia. Permite "rotar" particiones y mover las viejas a almacenamiento frío.
+2. ¿Qué datos deberían quedar en almacenamiento activo (hot)?  
+   Eventos recientes (últimos 30-90 días) y eventos de instancias en curso, que se consultan para operar y debuggear.
+3. ¿Qué datos podrían archivarse (cold)?  
+   Eventos de instancias ya finalizadas y con más de N meses de antigüedad → mover a almacenamiento de bajo costo (object storage / cold tier), manteniendo solo metadatos indexados.
+4. ¿Qué consultas deberían seguir siendo eficientes?  
+   (a) Historial de una instancia activa, (b) eventos recientes de un tenant, (c) consultas por ventana temporal reciente. El particionado temporal garantiza que estas consultas toquen pocas particiones calientes.
 
 ## 4. Parte D: Replicación y clustering conceptual
 
@@ -146,10 +156,14 @@ Híbrida: Active-Passive (master-slave) para los datos consistentes + Active-Act
 
 ### Justificación (preguntas guía)
 
-1. ¿Qué topología mejora disponibilidad? Active-active: sin nodo único de escritura, cualquier réplica responde; ideal para eventos y métricas (AP).
-2. ¿Cuál simplifica consistencia? Master-slave / active-passive: un único punto de escritura elimina conflictos de concurrencia; ideal para estado de instancia y definiciones (CP).
-3. ¿Cuál es más realista para una primera versión del TPO? Active-passive (master-slave) para todo: es la más simple de implementar y razonar, suficiente para el volumen inicial (50 tenants), y permite evolucionar hacia híbrida después.
-4. ¿Qué topología NO implementarían todavía y por qué? Active-active multi-región con resolución de conflictos (CRDTs / merge complejo): añade complejidad operativa (detección y resolución de conflictos, latencia inter-región) injustificada para la etapa inicial. Se difiere hasta tener escala real y SLAs que lo exijan.
+1. ¿Qué topología mejora disponibilidad?  
+   Active-active: sin nodo único de escritura, cualquier réplica responde; ideal para eventos y métricas (AP).
+2. ¿Cuál simplifica consistencia?  
+   Master-slave / active-passive: un único punto de escritura elimina conflictos de concurrencia; ideal para estado de instancia y definiciones (CP).
+3. ¿Cuál es más realista para una primera versión del TPO?  
+   Active-passive (master-slave) para todo: es la más simple de implementar y razonar, suficiente para el volumen inicial (50 tenants), y permite evolucionar hacia híbrida después.
+4. ¿Qué topología NO implementarían todavía y por qué?  
+   Active-active multi-región con resolución de conflictos (CRDTs / merge complejo): añade complejidad operativa (detección y resolución de conflictos, latencia inter-región) injustificada para la etapa inicial. Se difiere hasta tener escala real y SLAs que lo exijan.
 
 ## 5. Parte E: Parámetros N, R, W
 
@@ -187,11 +201,16 @@ Recordatorio: con R + W > N se garantiza solapamiento de quórums de lectura y e
 
 ### Preguntas guía
 
-- ¿Dónde conviene escritura rápida? En eventos (W=1) y métricas (W=1): write-intensive, toleran eventualidad.
-- ¿Dónde conviene lectura consistente? En estado de instancia (R=2, quórum): antes de decidir una transición hay que ver el valor real.
-- ¿Dónde se tolera inconsistencia temporal? En métricas, configuración de tenant y visualización de historial para usuarios no activos.
-- ¿Qué configuración para evitar pérdida de auditoría? N=3 con W≥1 (idealmente W=2 para durabilidad ante fallo): muchas réplicas garantizan que el evento sobreviva aunque caiga un nodo.
-- ¿Qué configuración para dashboards operativos? N=2, R=1, W=1 → eventual, rápida y barata; los números pueden recalcularse desde el event log.
+- ¿Dónde conviene escritura rápida?  
+  En eventos (W=1) y métricas (W=1): write-intensive, toleran eventualidad.
+- ¿Dónde conviene lectura consistente?  
+  En estado de instancia (R=2, quórum): antes de decidir una transición hay que ver el valor real.
+- ¿Dónde se tolera inconsistencia temporal?  
+  En métricas, configuración de tenant y visualización de historial para usuarios no activos.
+- ¿Qué configuración para evitar pérdida de auditoría?  
+  N=3 con W≥1 (idealmente W=2 para durabilidad ante fallo): muchas réplicas garantizan que el evento sobreviva aunque caiga un nodo.
+- ¿Qué configuración para dashboards operativos?  
+  N=2, R=1, W=1 → eventual, rápida y barata; los números pueden recalcularse desde el event log.
 
 ## 6. Parte F: Plan preliminar de escalabilidad
 
