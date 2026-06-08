@@ -106,7 +106,7 @@ Arregla todas las tablas del documento de una.
 Crear `.table-widths.lua`:
 
 ```lua
-local MINW = 13  -- piso: que una columna corta no quede mas angosta que su texto
+local MINW = 22  -- piso: que una columna corta no quede mas angosta que su texto
 local CAP  = 42  -- tope: que una columna larga no se coma todo el ancho
 
 local function scan(rows, maxlen)
@@ -199,6 +199,12 @@ que solo se usa en bloques con resaltado.)
   texlive que provee ese `.sty`. Buscarlo con `kpsewhich nombre.sty`.
 - Verificar el PDF: `pdfinfo salida.pdf` (paginas) y revisar que la salida
   de `pandoc` no tenga `Missing character` ni `Error`.
+- Bloques de codigo con lenguaje (` ```json `, ` ```js `): el resaltado de
+  sintaxis usa el entorno `Shaded`, que necesita `framed.sty`
+  (texlive-latexextra). Si falla con `File 'framed.sty' not found` y no se
+  quiere instalar ese paquete, generar con `--no-highlight`: el codigo sale
+  en monoespaciada plana, sin colores. Los bloques sin lenguaje no lo
+  gatillan.
 - No usar `--number-sections` si los encabezados ya traen el numero a mano
   (`## 1. Parte A`, `## 9. ...`). Pandoc agregaria su propia numeracion
   encima y queda doble (`1.10  9. ...`). Estos TPs numeran a mano, asi que
