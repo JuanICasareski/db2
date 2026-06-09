@@ -117,11 +117,11 @@ indican salidas alternativas de un paso de decisión.
 
 El mismo grafo cargado en Neo4j, con todos los pasos y sus relaciones:
 
-![Grafo completo del proceso alta_proveedor en Neo4j](act7_grafo_completo.png){width=80%}
+![Grafo completo del proceso alta_proveedor en Neo4j](recursos/Actividad_7/act7_grafo_completo.png){width=80%}
 
 Vista de solo las transiciones NEXT, que corresponde al flujo BPM:
 
-![Transiciones NEXT del proceso](act7_flujo_next.png){width=95%}
+![Transiciones NEXT del proceso](recursos/Actividad_7/act7_flujo_next.png){width=95%}
 
 El diagrama responde las preguntas de la consigna:
 
@@ -241,7 +241,7 @@ RETURN i.name AS integracion, procesos;
 Resultado: API AFIP, usada por alta_proveedor y baja_proveedor. Sirve para
 medir el impacto de una caída o un cambio de contrato de esa integración.
 
-![API AFIP compartida entre dos procesos](act7_integraciones_afip.png){width=60%}
+![API AFIP compartida entre dos procesos](recursos/Actividad_7/act7_integraciones_afip.png){width=60%}
 
 Consulta F2, roles que intervienen en más de un proceso:
 
