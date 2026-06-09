@@ -49,7 +49,6 @@ pandoc entrada.md \
   -V mainfont="Noto Sans" \
   -V monofont="JetBrainsMono Nerd Font Mono" \
   -V fontsize=11pt \
-  --toc \
   --highlight-style=tango
 ```
 
@@ -89,7 +88,6 @@ pandoc entrada.md -o salida.pdf \
   -V monofont="JetBrainsMono Nerd Font Mono" \
   -V fontsize=11pt \
   -H .pandoc-header.tex \
-  --toc \
   --highlight-style=tango
 ```
 
@@ -205,10 +203,11 @@ que solo se usa en bloques con resaltado.)
   quiere instalar ese paquete, generar con `--no-highlight`: el codigo sale
   en monoespaciada plana, sin colores. Los bloques sin lenguaje no lo
   gatillan.
+- No usar `--toc`: los TPs de este repo no llevan indice ni tabla de
+  contenidos. Es la convencion del resto de las actividades, mantenerla.
 - No usar `--number-sections` si los encabezados ya traen el numero a mano
   (`## 1. Parte A`, `## 9. ...`). Pandoc agregaria su propia numeracion
-  encima y queda doble (`1.10  9. ...`). Estos TPs numeran a mano, asi que
-  va solo `--toc`.
+  encima y queda doble (`1.10  9. ...`). Estos TPs numeran a mano.
 
 ## Verificacion visual obligatoria
 
@@ -257,7 +256,6 @@ for f in Actividad_3 Actividad_4; do
     -V fontsize=10pt \
     -H .pandoc-header.tex \
     --lua-filter=.table-widths.lua \
-    --toc \
     --highlight-style=tango
   pdftoppm -png -r 90 "$f.pdf" "/tmp/$f"   # revisar /tmp/$f-*.png
 done

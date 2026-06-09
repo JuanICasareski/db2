@@ -107,7 +107,7 @@ Lo relevante para resolver TPs:
 
 Formato fijo, igual en todos los TPs:
 
-- Titulo como `# Resolucion de la Actividad N: Clase Virtual NN` (heading 1).
+- Titulo como `# Resolucion de la Actividad N: Clase NN` (heading 1).
 - Linea `Grupo N`.
 - Linea `Integrantes:` seguida de una lista con vinetas, un integrante por
   vineta, en formato `Apellido, Nombre, legajo NNNNNNN, email@uade.edu.ar`.
@@ -117,7 +117,7 @@ Formato fijo, igual en todos los TPs:
 Ejemplo:
 
 ```markdown
-# Resolucion de la Actividad 4: Clase Virtual 02
+# Resolucion de la Actividad 4: Clase 02
 
 Grupo 4
 
