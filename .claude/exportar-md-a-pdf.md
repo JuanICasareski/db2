@@ -164,6 +164,31 @@ Asi LaTeX puede cortar el renglon. Vale para `+`, `/`, etc. dentro y entre
 spans de codigo. Excepcion: los diagramas ASCII de ancho fijo, donde el
 espaciado rompe la alineacion (ahi los tokens cortos como `R+W>N` se dejan).
 
+Claves Redis y patrones con `:` `_` `{}`: una clave tipo
+`process_def:{tenant_id}:{process_id}:{version}` es un token largo sin espacios
+que tampoco se parte y desborda la columna. Meterle espacios romperia la clave,
+asi que en vez de eso se usa un filtro Lua que inserta un corte invisible
+(zero-width space, U+200B) despues de cada `:` `_` `}` en tokens de mas de 16
+caracteres. LaTeX corta ahi sin alterar el texto. No toca spans ni bloques de
+codigo (el filtro solo ve nodos `Str`), asi que los `key:pattern` dentro de
+backticks quedan intactos. Crear `.break-keys.lua`:
+
+```lua
+local ZWSP = "\226\128\139"  -- U+200B
+function Str(el)
+  local t = el.text
+  local l = utf8.len(t) or #t
+  if l > 16 and t:find("[:_}]") then
+    t = t:gsub("([:_}])", "%1" .. ZWSP)
+    return pandoc.Str(t)
+  end
+end
+```
+
+Pasarlo antes del filtro de tablas: `--lua-filter=.break-keys.lua
+--lua-filter=.table-widths.lua`. Util en TPs con muchas claves Redis o rutas
+largas en tablas (Actividad 8).
+
 ## Diagramas ASCII (cajas y flechas)
 
 Van en un bloque de codigo sin lenguaje (entre ` ``` `) para que se rendericen
@@ -231,7 +256,8 @@ header de simbolos y volver a generar.
 Genera los PDF de las actividades con el flujo completo: filtro de tablas,
 header de simbolos y verificacion visual. Crea y borra los temporales.
 
-El `.table-widths.lua` es el de la seccion de tablas anchas.
+El `.table-widths.lua` es el de la seccion de tablas anchas y el
+`.break-keys.lua` el de la seccion de palabras largas sin corte.
 
 ```bash
 cat > .pandoc-header.tex <<'EOF'
@@ -247,6 +273,18 @@ cat > .pandoc-header.tex <<'EOF'
 \renewcommand{\verbatim}{\footnotesize\origverbatim}
 EOF
 
+cat > .break-keys.lua <<'EOF'
+local ZWSP = "\226\128\139"  -- U+200B
+function Str(el)
+  local t = el.text
+  local l = utf8.len(t) or #t
+  if l > 16 and t:find("[:_}]") then
+    t = t:gsub("([:_}])", "%1" .. ZWSP)
+    return pandoc.Str(t)
+  end
+end
+EOF
+
 for f in Actividad_3 Actividad_4; do
   pandoc "$f.md" -o "$f.pdf" \
     --pdf-engine=xelatex \
@@ -255,10 +293,11 @@ for f in Actividad_3 Actividad_4; do
     -V monofont="JetBrainsMono Nerd Font Mono" \
     -V fontsize=10pt \
     -H .pandoc-header.tex \
+    --lua-filter=.break-keys.lua \
     --lua-filter=.table-widths.lua \
     --highlight-style=tango
   pdftoppm -png -r 90 "$f.pdf" "/tmp/$f"   # revisar /tmp/$f-*.png
 done
 
-rm -f .pandoc-header.tex .table-widths.lua
+rm -f .pandoc-header.tex .table-widths.lua .break-keys.lua
 ```
