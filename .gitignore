@@ -1,6 +1,3 @@
-# Imagenes generadas para los TPs (se embeben en el PDF, no se versionan)
-*.png
-*.svg
 
 # Temporales del flujo de exportado a PDF
 .pandoc-header.tex
