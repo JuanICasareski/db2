@@ -18,5 +18,11 @@ Servicios actuales:
 
 - MongoDB 8 en `localhost:27017` (definiciones e instancias de procesos).
 - Redis 7 en `localhost:6379` (estado actual y cache).
+- Cassandra 5 en `localhost:9042` (historial de eventos). Tarda un rato
+  en levantar: el healthcheck le da hasta unos minutos.
+- InfluxDB 2 en `localhost:8086` (metricas y series temporales). La
+  imagen se autoconfigura: org `flowops`, bucket `flowops`, token
+  `dev-token` (usuario `flowops` / `flowops123` para la UI web).
 
-Sin autenticacion: es un entorno de desarrollo local.
+Sin autenticacion salvo InfluxDB, que la exige: las credenciales de
+arriba son fijas y solo para desarrollo local.

@@ -3,3 +3,5 @@ name: flowops
 include:
   - modules/mongodb.yml
   - modules/redis.yml
+  - modules/cassandra.yml
+  - modules/influxdb.yml

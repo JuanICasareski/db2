@@ -1,0 +1,21 @@
+services:
+  cassandra:
+    image: cassandra:5
+    container_name: flowops-cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      # Heap chico para no comerse la RAM en desarrollo
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+volumes:
+  cassandra_data:

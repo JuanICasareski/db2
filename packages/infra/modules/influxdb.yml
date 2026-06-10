@@ -1,0 +1,23 @@
+services:
+  influxdb:
+    image: influxdb:2
+    container_name: flowops-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: flowops
+      DOCKER_INFLUXDB_INIT_PASSWORD: flowops123
+      DOCKER_INFLUXDB_INIT_ORG: flowops
+      DOCKER_INFLUXDB_INIT_BUCKET: flowops
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: dev-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  influxdb_data:
