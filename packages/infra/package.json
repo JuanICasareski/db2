@@ -1,0 +1,11 @@
+{
+  "name": "@flowops/infra",
+  "private": true,
+  "scripts": {
+    "up": "docker compose up -d --wait",
+    "down": "docker compose down",
+    "nuke": "docker compose down -v",
+    "ps": "docker compose ps",
+    "logs": "docker compose logs -f"
+  }
+}

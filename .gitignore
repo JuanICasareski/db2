@@ -2,3 +2,9 @@
 # Temporales del flujo de exportado a PDF
 .pandoc-header.tex
 .table-widths.lua
+
+# Monorepo
+node_modules/
+dist/
+.turbo/
+.env

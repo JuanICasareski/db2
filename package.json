@@ -1,0 +1,14 @@
+{
+  "name": "flowops",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "infra:up": "pnpm --filter @flowops/infra up",
+    "infra:down": "pnpm --filter @flowops/infra down"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

@@ -1,10 +1,21 @@
 # Instrucciones del proyecto
 
-Repo de trabajos practicos de base de datos 2. Cada tipo de trabajo va en
-su carpeta, con un `CLAUDE.md` propio para lo especifico de esa carpeta:
+Repo de trabajos practicos de base de datos 2. La raiz es el monorepo
+TypeScript del prototipo FlowOps (Turborepo + pnpm workspaces):
+
+- `apps/`: backend y front.
+- `packages/infra/`: Docker Compose general que incluye un modulo por
+  servicio desde `modules/`.
+
+Los documentos van cada uno en su carpeta, con un `CLAUDE.md` propio para
+lo especifico de esa carpeta:
 
 - `tpo/`: trabajo practico obligatorio (consigna en `tpo/consigna.html`).
 - `tpo/actividades/`: resoluciones de las actividades de clase.
+
+## Reglas del codigo
+
+@.claude/acceso-datos-tipado.md
 
 ## Datos del grupo
 

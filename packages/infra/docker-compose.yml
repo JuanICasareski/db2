@@ -1,0 +1,5 @@
+name: flowops
+
+include:
+  - modules/mongodb.yml
+  - modules/redis.yml
