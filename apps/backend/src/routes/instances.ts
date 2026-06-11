@@ -31,6 +31,17 @@ const startInstance = createRoute({
   },
 });
 
+const listInstances = createRoute({
+  method: "get",
+  path: "/",
+  summary: "Ultimas instancias del tenant",
+  request: { headers: TenantHeaderSchema },
+  responses: {
+    200: jsonContent(z.array(InstanceSchema), "Instancias por actividad reciente"),
+    400: jsonContent(ErrorSchema, "Request invalido"),
+  },
+});
+
 const getInstance = createRoute({
   method: "get",
   path: "/{instance_id}",
@@ -125,6 +136,11 @@ instances.openapi(startInstance, async (c) => {
     await metricsRepo.instanceStarted(tenantId, def.process_id);
   }
   return c.json(saved, created ? 201 : 200);
+});
+
+instances.openapi(listInstances, async (c) => {
+  const tenantId = c.req.valid("header")["x-tenant-id"];
+  return c.json(await instancesRepo.list(tenantId), 200);
 });
 
 instances.openapi(getInstance, async (c) => {

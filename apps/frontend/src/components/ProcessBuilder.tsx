@@ -108,7 +108,7 @@ export function ProcessBuilder({ onCreate }: Props) {
             id: <code>{processId}</code>
           </p>
         </div>
-        <label className="flex items-start gap-1.5 text-xs text-slate-500">
+        <label className="flex items-center gap-1.5 self-start text-xs text-slate-500">
           v
           <Input
             type="number"

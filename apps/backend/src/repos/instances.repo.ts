@@ -17,6 +17,15 @@ export const instancesRepo = {
     }
   },
 
+  // Ultimas instancias del tenant, las de actividad mas reciente primero.
+  async list(tenantId: string, limit = 20): Promise<Instance[]> {
+    return col()
+      .find({ tenant_id: tenantId }, { projection: { _id: 0 } })
+      .sort({ updated_at: -1 })
+      .limit(limit)
+      .toArray();
+  },
+
   async get(tenantId: string, instanceId: string): Promise<Instance | null> {
     return col().findOne(
       { tenant_id: tenantId, instance_id: instanceId },

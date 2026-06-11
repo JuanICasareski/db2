@@ -49,12 +49,14 @@ services:
       timeout: 10s
       retries: 10
 
-  # One-off: suma los miembros que falten al replica set (idempotente).
+  # Suma los miembros que falten al replica set (idempotente) y se queda
+  # dormido: `up --wait` falla si un contenedor termina, aunque salga 0,
+  # asi que en vez de one-off es un servicio con healthcheck (healthy
+  # cuando el RS tiene 3 miembros).
   mongodb-rs-init:
     image: mongo:7
     container_name: flowops-mongodb-rs-init
     profiles: ["full-size"]
-    restart: "no"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -63,16 +65,21 @@ services:
       mongodb-3:
         condition: service_healthy
     entrypoint:
-      - mongosh
-      - --host
-      - mongodb
-      - --quiet
-      - --eval
-      - >
-        const hosts = rs.status().members.map(m => m.name);
-        if (!hosts.some(h => h.startsWith('mongodb-2'))) rs.add('mongodb-2:27017');
-        if (!hosts.some(h => h.startsWith('mongodb-3'))) rs.add('mongodb-3:27017');
-        print('rs0 con ' + rs.status().members.length + ' miembros');
+      - bash
+      - -ec
+      - |
+        mongosh --host mongodb --quiet --eval "
+          const hosts = rs.status().members.map(m => m.name);
+          if (!hosts.some(h => h.startsWith('mongodb-2'))) rs.add('mongodb-2:27017');
+          if (!hosts.some(h => h.startsWith('mongodb-3'))) rs.add('mongodb-3:27017');
+          print('rs0 con ' + rs.status().members.length + ' miembros');
+        "
+        sleep infinity
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --host mongodb --quiet --eval 'rs.status().members.length' | grep -qx 3"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
 
 volumes:
   mongodb_data:

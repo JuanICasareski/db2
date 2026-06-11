@@ -3,12 +3,14 @@ import { cors } from "hono/cors";
 import { createRouter } from "./lib/api";
 import { processes } from "./routes/processes";
 import { instances } from "./routes/instances";
+import { tenants } from "./routes/tenants";
 
 export const app = createRouter();
 
 // Abierto: entorno de desarrollo local, el front pega directo.
 app.use("*", cors());
 
+app.route("/tenants", tenants);
 app.route("/processes", processes);
 app.route("/instances", instances);
 

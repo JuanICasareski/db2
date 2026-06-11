@@ -1,19 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Event, Instance, ProcessDefinition } from "@flowops/types";
+import type { Event, Instance, ProcessDefinition, Tenant } from "@flowops/types";
 import { Building2, TriangleAlert, Workflow, X } from "lucide-react";
 import { api } from "./api";
 import { ProcessPanel } from "./components/ProcessPanel";
 import { InstancePanel } from "./components/InstancePanel";
 
 export default function App() {
-  const [tenant, setTenant] = useState("empresa_acme");
-  const [tenantDraft, setTenantDraft] = useState("empresa_acme");
+  const initialTenant = localStorage.getItem("tenant") ?? "empresa_acme";
+  const [tenant, setTenant] = useState(initialTenant);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [processes, setProcesses] = useState<ProcessDefinition[]>([]);
   const [selected, setSelected] = useState<ProcessDefinition | null>(null);
   const [instance, setInstance] = useState<Instance | null>(null);
   const [instDef, setInstDef] = useState<ProcessDefinition | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [recent, setRecent] = useState<Instance[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("tenant", tenant);
+  }, [tenant]);
 
   const guard = useCallback(async (fn: () => Promise<void>) => {
     try {
@@ -24,8 +30,17 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    void guard(async () => setTenants(await api.listTenants()));
+  }, [guard]);
+
   const refreshProcesses = useCallback(
     () => guard(async () => setProcesses(await api.listProcesses(tenant))),
+    [guard, tenant],
+  );
+
+  const refreshRecent = useCallback(
+    () => guard(async () => setRecent(await api.listInstances(tenant))),
     [guard, tenant],
   );
 
@@ -35,12 +50,28 @@ export default function App() {
     setInstDef(null);
     setEvents([]);
     void refreshProcesses();
-  }, [refreshProcesses]);
+    void refreshRecent();
+  }, [refreshProcesses, refreshRecent]);
 
   const showInstance = async (inst: Instance, def: ProcessDefinition) => {
     setInstance(inst);
     setInstDef(def);
     setEvents(await api.listEvents(tenant, inst.instance_id));
+    void refreshRecent();
+  };
+
+  const loadInstance = (id: string) =>
+    guard(async () => {
+      const inst = await api.getInstance(tenant, id);
+      const def = await api.getProcess(tenant, inst.process_id, inst.version);
+      await showInstance(inst, def);
+    });
+
+  const clearInstance = () => {
+    setInstance(null);
+    setInstDef(null);
+    setEvents([]);
+    void refreshRecent();
   };
 
   return (
@@ -55,14 +86,20 @@ export default function App() {
           </h1>
           <label className="flex items-center gap-2 text-sm text-slate-300">
             <Building2 className="size-4 text-slate-400" />
-            <input
-              className="w-44 rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-sm text-white outline-none placeholder:text-slate-400 focus:border-indigo-400"
-              value={tenantDraft}
-              onChange={(e) => setTenantDraft(e.target.value)}
-              onBlur={() => setTenant(tenantDraft)}
-              onKeyDown={(e) => e.key === "Enter" && setTenant(tenantDraft)}
-              placeholder="tenant"
-            />
+            <select
+              className="w-44 cursor-pointer rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-sm text-white outline-none focus:border-indigo-400"
+              value={tenant}
+              onChange={(e) => setTenant(e.target.value)}
+            >
+              {!tenants.some((t) => t.tenant_id === tenant) && (
+                <option value={tenant}>{tenant}</option>
+              )}
+              {tenants.map((t) => (
+                <option key={t.tenant_id} value={t.tenant_id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       </header>
@@ -86,7 +123,7 @@ export default function App() {
         <ProcessPanel
           processes={processes}
           selected={selected}
-          onSelect={setSelected}
+          onSelect={(def) => setSelected((cur) => (cur === def ? null : def))}
           onRefresh={refreshProcesses}
           onCreate={(def) =>
             guard(async () => {
@@ -109,13 +146,9 @@ export default function App() {
           instance={instance}
           def={instDef}
           events={events}
-          onLoad={(id) =>
-            guard(async () => {
-              const inst = await api.getInstance(tenant, id);
-              const def = await api.getProcess(tenant, inst.process_id, inst.version);
-              await showInstance(inst, def);
-            })
-          }
+          recent={recent}
+          onLoad={loadInstance}
+          onClear={clearInstance}
           onAdvance={(to, payload) =>
             guard(async () => {
               if (!instance || !instDef) return;

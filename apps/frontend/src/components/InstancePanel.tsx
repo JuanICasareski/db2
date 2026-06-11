@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Event, EventType, Instance, ProcessDefinition } from "@flowops/types";
-import { Activity, ArrowRight, Search } from "lucide-react";
+import { Activity, ArrowRight, History, Search, X } from "lucide-react";
 import { Button, Card, Input } from "./ui";
 import { FlowDiagram } from "./FlowDiagram";
 
@@ -8,7 +8,9 @@ type Props = {
   instance: Instance | null;
   def: ProcessDefinition | null;
   events: Event[];
+  recent: Instance[];
   onLoad: (instanceId: string) => Promise<void>;
+  onClear: () => void;
   onAdvance: (to: string, payload?: Record<string, unknown>) => Promise<void>;
 };
 
@@ -18,7 +20,23 @@ const EVENT_STYLE: Record<EventType, { dot: string; label: string }> = {
   instance_finished: { dot: "bg-emerald-500", label: "fin" },
 };
 
-export function InstancePanel({ instance, def, events, onLoad, onAdvance }: Props) {
+function StatusBadge({ status }: { status: Instance["status"] }) {
+  const running = status === "running";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+        running
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-rose-200 bg-rose-50 text-rose-700"
+      }`}
+    >
+      <span className={`size-1.5 rounded-full ${running ? "animate-pulse bg-emerald-500" : "bg-rose-500"}`} />
+      {status}
+    </span>
+  );
+}
+
+export function InstancePanel({ instance, def, events, recent, onLoad, onClear, onAdvance }: Props) {
   const [lookup, setLookup] = useState("");
   const [payload, setPayload] = useState("");
   const [payloadError, setPayloadError] = useState<string | null>(null);
@@ -47,29 +65,65 @@ export function InstancePanel({ instance, def, events, onLoad, onAdvance }: Prop
 
   return (
     <Card
-      title="Instancia"
+      title={instance ? "Instancia" : "Instancias"}
       icon={<Activity className="size-4 text-indigo-500" />}
       actions={
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="buscar por instance_id"
-            value={lookup}
-            onChange={(e) => setLookup(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && lookup.trim() && void onLoad(lookup.trim())}
-          />
-          <Button variant="outline" onClick={() => lookup.trim() && void onLoad(lookup.trim())}>
-            <Search className="size-4" />
+        instance ? (
+          <Button variant="ghost" title="Volver a la lista" onClick={onClear}>
+            <X className="size-4" />
           </Button>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="buscar por id exacto"
+              value={lookup}
+              onChange={(e) => setLookup(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && lookup.trim() && void onLoad(lookup.trim())}
+            />
+            <Button variant="outline" title="Buscar" onClick={() => lookup.trim() && void onLoad(lookup.trim())}>
+              <Search className="size-4" />
+            </Button>
+          </div>
+        )
       }
     >
       {!instance && (
-        <div className="grid place-items-center rounded-xl border border-dashed border-slate-300 py-10 text-center">
-          <p className="text-sm text-slate-400">
-            Inicia una instancia con el boton de play
-            <br />o carga una existente por id.
+        <>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            <History className="size-3.5" /> Ultimas instancias
           </p>
-        </div>
+          <ul className="flex flex-col gap-1.5">
+            {recent.map((i) => (
+              <li key={i.instance_id}>
+                <button
+                  onClick={() => void onLoad(i.instance_id)}
+                  className="flex w-full cursor-pointer flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/50"
+                >
+                  <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">
+                    {i.instance_id}
+                  </code>
+                  <span className="text-xs text-slate-400">
+                    {i.process_id} · v{i.version}
+                  </span>
+                  <code className="text-xs text-slate-500">{i.current_node}</code>
+                  <span className="ml-auto flex items-center gap-2">
+                    <StatusBadge status={i.status} />
+                    <span className="text-xs text-slate-400">
+                      {new Date(i.updated_at).toLocaleTimeString()}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+            {recent.length === 0 && (
+              <li className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-400">
+                Todavia no hay instancias para este tenant.
+                <br />
+                Inicia una con el boton de play en un proceso.
+              </li>
+            )}
+          </ul>
+        </>
       )}
 
       {instance && def && (
@@ -81,18 +135,7 @@ export function InstancePanel({ instance, def, events, onLoad, onAdvance }: Prop
             <span className="text-slate-400">
               {instance.process_id} · v{instance.version} · step {instance.step}
             </span>
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                running
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-rose-200 bg-rose-50 text-rose-700"
-              }`}
-            >
-              <span
-                className={`size-1.5 rounded-full ${running ? "animate-pulse bg-emerald-500" : "bg-rose-500"}`}
-              />
-              {instance.status}
-            </span>
+            <StatusBadge status={instance.status} />
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50/70 p-3">

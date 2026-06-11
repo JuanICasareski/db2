@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --noEmit",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "wipe": "tsx src/wipe.ts"
   },
   "dependencies": {
     "@flowops/types": "workspace:*",

@@ -5,6 +5,7 @@ import type {
   InstanceState,
   ProcessDefinition,
   StartInstance,
+  Tenant,
 } from "@flowops/types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -30,6 +31,7 @@ async function req<T>(tenant: string, path: string, init?: RequestInit): Promise
 }
 
 export const api = {
+  listTenants: () => req<Tenant[]>("", "/tenants"),
   listProcesses: (tenant: string) => req<ProcessDefinition[]>(tenant, "/processes"),
   getProcess: (tenant: string, processId: string, version?: number) =>
     req<ProcessDefinition>(
@@ -38,6 +40,7 @@ export const api = {
     ),
   createProcess: (tenant: string, def: unknown) =>
     req<ProcessDefinition>(tenant, "/processes", { method: "POST", body: JSON.stringify(def) }),
+  listInstances: (tenant: string) => req<Instance[]>(tenant, "/instances"),
   startInstance: (tenant: string, body: StartInstance) =>
     req<Instance>(tenant, "/instances", { method: "POST", body: JSON.stringify(body) }),
   getInstance: (tenant: string, instanceId: string) =>
