@@ -29,13 +29,24 @@ Compose con dos profiles:
 
 - Liviano (por defecto, `pnpm infra up`): un contenedor por motor. Para
   el dia a dia. Mongo corre igual como replica set de un miembro.
-- Full-size (`pnpm infra up:full-size`): Cassandra x3 (RF=3) y Mongo
-  replica set x3. Materializa los numeros de la Actividad 4: N3 R2 W2
-  para estado de instancia (write y read concern majority en el replica
-  set) y N3 R1 W1 o QUORUM por operacion en Cassandra, como en la parte
-  E de la Actividad 6. Se usa para la demo y defensa de N/R/W. Para
-  volver al liviano: `pnpm infra nuke` (con un solo nodo no hay mayoria)
-  y reseed.
+- Full-size (`pnpm infra up:full-size`): Cassandra x3 (RF=3), Mongo
+  replica set x3 y Redis Cluster x4. Materializa los numeros de la
+  Actividad 4: N3 R2 W2 para estado de instancia (write y read concern
+  majority en el replica set) y N3 R1 W1 o QUORUM por operacion en
+  Cassandra, como en la parte E de la Actividad 6. Se usa para la demo
+  y defensa de N/R/W. Para volver al liviano: `pnpm infra nuke` (con un
+  solo nodo no hay mayoria) y reseed.
+
+El Redis del full-size es un cluster de 3 masters mas 1 replica del
+primero. Lo que demuestra no es N/R/W (Redis replica asincronico, con
+un solo nodo que escribe por slot) sino las otras dos patas del
+distribuido: sharding y failover. Las keys llevan hash tag por tenant
+(`instance_state:{tenant}:...`), asi todas las keys de un tenant caen
+en el mismo slot y cada tenant vive entero en un shard. Si se mata el
+primer master, los otros dos votan y la replica se promueve sola en
+unos segundos; el cliente del backend redescubre la topologia y sigue.
+En el profile liviano Redis queda single-node, y el backend elige
+cliente comun o cluster segun la variable `REDIS_CLUSTER_NODES`.
 
 InfluxDB queda single-node siempre: la edicion OSS no clusteriza. El N=2
 de metricas de la Actividad 4 se defiende como analisis conceptual, que
