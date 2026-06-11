@@ -3,9 +3,10 @@
   "private": true,
   "scripts": {
     "up": "docker compose up -d --wait",
-    "down": "docker compose down",
-    "nuke": "docker compose down -v",
-    "ps": "docker compose ps",
-    "logs": "docker compose logs -f"
+    "up:full-size": "docker compose --profile full-size up -d --wait",
+    "down": "docker compose --profile full-size down",
+    "nuke": "docker compose --profile full-size down -v",
+    "ps": "docker compose --profile full-size ps",
+    "logs": "docker compose --profile full-size logs -f"
   }
 }

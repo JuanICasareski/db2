@@ -17,5 +17,49 @@ services:
       retries: 30
       start_period: 60s
 
+  # Nodos extra del profile full-size. Se unen al ring de a uno
+  # (depends_on encadenado): Cassandra no banca bootstraps simultaneos.
+  cassandra-2:
+    image: cassandra:5
+    container_name: flowops-cassandra-2
+    profiles: ["full-size"]
+    environment:
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+      CASSANDRA_SEEDS: cassandra
+    volumes:
+      - cassandra2_data:/var/lib/cassandra
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+  cassandra-3:
+    image: cassandra:5
+    container_name: flowops-cassandra-3
+    profiles: ["full-size"]
+    environment:
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+      CASSANDRA_SEEDS: cassandra
+    volumes:
+      - cassandra3_data:/var/lib/cassandra
+    depends_on:
+      cassandra-2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
 volumes:
   cassandra_data:
+  cassandra2_data:
+  cassandra3_data:

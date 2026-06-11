@@ -3,15 +3,78 @@ services:
     # mongo:8 segfaultea al minuto en esta maquina (exit 139); 7 es estable
     image: mongo:7
     container_name: flowops-mongodb
+    hostname: mongodb
+    # Siempre como replica set: en liviano queda con un solo miembro.
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok"]
+      # La primera corrida inicia el replica set; despues solo chequea.
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate().ok }'"]
       interval: 5s
-      timeout: 5s
+      timeout: 10s
       retries: 10
+
+  mongodb-2:
+    image: mongo:7
+    container_name: flowops-mongodb-2
+    hostname: mongodb-2
+    profiles: ["full-size"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb2_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.runCommand('ping').ok\""]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  mongodb-3:
+    image: mongo:7
+    container_name: flowops-mongodb-3
+    hostname: mongodb-3
+    profiles: ["full-size"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongodb3_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.runCommand('ping').ok\""]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  # One-off: suma los miembros que falten al replica set (idempotente).
+  mongodb-rs-init:
+    image: mongo:7
+    container_name: flowops-mongodb-rs-init
+    profiles: ["full-size"]
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mongodb-2:
+        condition: service_healthy
+      mongodb-3:
+        condition: service_healthy
+    entrypoint:
+      - mongosh
+      - --host
+      - mongodb
+      - --quiet
+      - --eval
+      - >
+        const hosts = rs.status().members.map(m => m.name);
+        if (!hosts.some(h => h.startsWith('mongodb-2'))) rs.add('mongodb-2:27017');
+        if (!hosts.some(h => h.startsWith('mongodb-3'))) rs.add('mongodb-3:27017');
+        print('rs0 con ' + rs.status().members.length + ' miembros');
 
 volumes:
   mongodb_data:
+  mongodb2_data:
+  mongodb3_data:

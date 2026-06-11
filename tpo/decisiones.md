@@ -27,12 +27,15 @@ minuto de arrancar en la maquina de desarrollo (exit 139).
 
 Compose con dos profiles:
 
-- Liviano (por defecto): un contenedor por motor. Para el dia a dia.
-- Cluster: Cassandra x3 (RF=3) y Mongo replica set x3. Materializa los
-  numeros de la Actividad 4: N3 R2 W2 para estado de instancia (write y
-  read concern majority en el replica set) y N3 R1 W1 o QUORUM por
-  operacion en Cassandra, como en la parte E de la Actividad 6. Se usa
-  para la demo y defensa de N/R/W.
+- Liviano (por defecto, `pnpm infra up`): un contenedor por motor. Para
+  el dia a dia. Mongo corre igual como replica set de un miembro.
+- Full-size (`pnpm infra up:full-size`): Cassandra x3 (RF=3) y Mongo
+  replica set x3. Materializa los numeros de la Actividad 4: N3 R2 W2
+  para estado de instancia (write y read concern majority en el replica
+  set) y N3 R1 W1 o QUORUM por operacion en Cassandra, como en la parte
+  E de la Actividad 6. Se usa para la demo y defensa de N/R/W. Para
+  volver al liviano: `pnpm infra nuke` (con un solo nodo no hay mayoria)
+  y reseed.
 
 InfluxDB queda single-node siempre: la edicion OSS no clusteriza. El N=2
 de metricas de la Actividad 4 se defiende como analisis conceptual, que
@@ -52,7 +55,11 @@ es el nivel que la consigna exige (no pide un distribuido real).
   .http ni tests automatizados.
 - Corre local con `pnpm dev` (la consigna pide API ejecutable localmente;
   en Docker van solo los motores).
-- El front es una app aparte y queda para despues.
+- El front es una app aparte (`apps/frontend`, Vite + React) que pega
+  directo a la API (CORS abierto en el backend, entorno local). Permite
+  crear un flujo (JSON validado con los schemas de `@flowops/types`),
+  iniciar instancias, avanzarlas y ver eventos. El manejo de tenants es
+  minimo: un input con el tenant activo que se manda en el header.
 
 ## Multi-tenant
 

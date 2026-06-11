@@ -1,0 +1,27 @@
+{
+  "name": "@flowops/backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "@flowops/types": "workspace:*",
+    "@hono/node-server": "^1.13.0",
+    "@hono/swagger-ui": "^0.5.0",
+    "@hono/zod-openapi": "^1.0.0",
+    "@influxdata/influxdb-client": "^1.35.0",
+    "cassandra-driver": "^4.7.2",
+    "hono": "^4.6.0",
+    "mongodb": "^6.10.0",
+    "redis": "^5.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

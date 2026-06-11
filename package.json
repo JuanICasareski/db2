@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "infra": "pnpm --filter @flowops/infra",
-    "db": "pnpm --filter @flowops/backend"
+    "infra": "pnpm --filter @flowops/infra run",
+    "db": "pnpm --filter @flowops/backend run"
   },
   "devDependencies": {
     "turbo": "^2.5.0"
