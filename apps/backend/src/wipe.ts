@@ -4,7 +4,7 @@
 // y despues pnpm db seed.
 import { config } from "./config";
 import { connectMongo, mongo } from "./db/mongo";
-import { connectRedis } from "./db/redis";
+import { connectRedis, flushRedis } from "./db/redis";
 import { connectCassandra, cassandra } from "./db/cassandra";
 
 await connectMongo();
@@ -14,8 +14,8 @@ for (const c of collections) {
 }
 console.log(`Mongo: ${collections.map((c) => c.name).join(", ") || "sin colecciones"} vaciadas`);
 
-const redis = await connectRedis();
-await redis.flushDb();
+await connectRedis();
+await flushRedis();
 console.log("Redis: FLUSHDB");
 
 await connectCassandra();

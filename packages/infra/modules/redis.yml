@@ -12,6 +12,109 @@ services:
       timeout: 5s
       retries: 10
 
+  # Redis Cluster del profile full-size: 3 masters (7001-7003) + 1
+  # replica de 7001 (7004), para la demo de sharding por tenant y
+  # failover automatico. Van en red de host: en modo cluster cada nodo
+  # anuncia su IP para el gossip y las redirecciones MOVED, y con la red
+  # bridge esas IPs internas no se alcanzan desde el backend, que corre
+  # en el host. En red de host todo es 127.0.0.1:700X para todos.
+  # El bus del cluster usa puerto + 10000 (17001-17004).
+  redis-cluster-1:
+    image: redis:7-alpine
+    container_name: flowops-redis-cluster-1
+    profiles: ["full-size"]
+    network_mode: host
+    command: ["redis-server", "--port", "7001", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    volumes:
+      - redis_cluster1_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7001", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-cluster-2:
+    image: redis:7-alpine
+    container_name: flowops-redis-cluster-2
+    profiles: ["full-size"]
+    network_mode: host
+    command: ["redis-server", "--port", "7002", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    volumes:
+      - redis_cluster2_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7002", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-cluster-3:
+    image: redis:7-alpine
+    container_name: flowops-redis-cluster-3
+    profiles: ["full-size"]
+    network_mode: host
+    command: ["redis-server", "--port", "7003", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    volumes:
+      - redis_cluster3_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7003", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-cluster-4:
+    image: redis:7-alpine
+    container_name: flowops-redis-cluster-4
+    profiles: ["full-size"]
+    network_mode: host
+    command: ["redis-server", "--port", "7004", "--cluster-enabled", "yes", "--cluster-config-file", "nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes"]
+    volumes:
+      - redis_cluster4_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7004", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Crea el cluster si no existe: slots repartidos entre 7001-7003 y
+  # 7004 como replica de 7001 (el master que se mata en la demo de
+  # failover). Igual que mongodb-rs-init, se queda dormido con
+  # healthcheck en vez de terminar, porque `up --wait` falla si un
+  # contenedor sale.
+  redis-cluster-init:
+    image: redis:7-alpine
+    container_name: flowops-redis-cluster-init
+    profiles: ["full-size"]
+    network_mode: host
+    depends_on:
+      redis-cluster-1:
+        condition: service_healthy
+      redis-cluster-2:
+        condition: service_healthy
+      redis-cluster-3:
+        condition: service_healthy
+      redis-cluster-4:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -ec
+      - |
+        if ! redis-cli -p 7001 cluster info | grep -q cluster_state:ok; then
+          redis-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 --cluster-yes
+          until redis-cli -p 7001 cluster info | grep -q cluster_state:ok; do sleep 1; done
+        fi
+        known=$$(redis-cli -p 7001 cluster info | tr -d '\r' | sed -n 's/cluster_known_nodes://p')
+        if [ "$$known" != "4" ]; then
+          master_id=$$(redis-cli -p 7001 cluster myid | tr -d '\r')
+          redis-cli --cluster add-node 127.0.0.1:7004 127.0.0.1:7001 --cluster-slave --cluster-master-id "$$master_id"
+        fi
+        echo "Redis Cluster listo: 3 masters + 1 replica"
+        sleep infinity
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -p 7001 cluster info | grep -q cluster_state:ok && redis-cli -p 7001 cluster info | grep -q cluster_known_nodes:4"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
   # Visor web de Redis para la demo. Se autoconecta a la instancia por
   # REDIS_HOSTS, asi muestra las keys sin cargar la conexion a mano.
   redis-commander:
@@ -28,3 +131,7 @@ services:
 
 volumes:
   redis_data:
+  redis_cluster1_data:
+  redis_cluster2_data:
+  redis_cluster3_data:
+  redis_cluster4_data:

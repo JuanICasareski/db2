@@ -3,8 +3,9 @@ import { mongo } from "../db/mongo";
 import { redis } from "../db/redis";
 
 const col = () => mongo().collection<ProcessDefinition>("process_definitions");
+// Hash tag {tenant}: en modo cluster las keys del tenant van al mismo slot.
 const cacheKey = (tenantId: string, processId: string, version: number) =>
-  `process_def:${tenantId}:${processId}:${version}`;
+  `process_def:{${tenantId}}:${processId}:${version}`;
 const CACHE_TTL_S = 300;
 
 export const processesRepo = {

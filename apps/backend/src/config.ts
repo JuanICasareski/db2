@@ -7,6 +7,9 @@ export const config = {
   mongoUrl: env("MONGO_URL", "mongodb://localhost:27017/?directConnection=true"),
   mongoDb: env("MONGO_DB", "flowops"),
   redisUrl: env("REDIS_URL", "redis://localhost:6379"),
+  // Lista host:puerto separada por comas. Si esta seteada, el backend
+  // habla con el Redis Cluster del profile full-size.
+  redisClusterNodes: env("REDIS_CLUSTER_NODES", "").split(",").filter(Boolean),
   cassandra: {
     contactPoints: env("CASSANDRA_CONTACT_POINTS", "localhost:9042").split(","),
     localDataCenter: env("CASSANDRA_DC", "datacenter1"),

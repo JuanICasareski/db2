@@ -1,7 +1,9 @@
 import { InstanceStateSchema, type Instance, type InstanceState } from "@flowops/types";
 import { redis } from "../db/redis";
 
-const key = (tenantId: string, instanceId: string) => `instance_state:${tenantId}:${instanceId}`;
+// El hash tag {tenant} hace que en modo cluster todas las keys de un
+// tenant caigan en el mismo slot: cada tenant vive en un solo shard.
+const key = (tenantId: string, instanceId: string) => `instance_state:{${tenantId}}:${instanceId}`;
 
 const toState = (inst: Instance): InstanceState => ({
   instance_id: inst.instance_id,
