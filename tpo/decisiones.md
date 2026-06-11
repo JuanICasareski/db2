@@ -6,7 +6,7 @@ aporta al prototipo (Neo4j, por ejemplo), se documenta como alternativa y
 no se implementa. El backend es demostrativo: alcanza la consigna, sin
 funcionalidad de mas.
 
-## Motores y reparto de datos
+## Bases de datos
 
 | Motor | Rol |
 |---|---|
@@ -20,37 +20,68 @@ del documento de definicion en Mongo. Usarlo de verdad duplicaria el
 modelo sin aportar consultas que el TPO necesite. Se justifica como
 alternativa descartada en el plan de sistemas.
 
-MongoDB queda pineado en la version 7: la imagen `mongo:8` segfaultea al
-minuto de arrancar en la maquina de desarrollo (exit 139).
+Todos los motores corren en Docker Compose con dos profiles:
 
-## Topologia
+- Liviano (por defecto, `pnpm infra up`): un contenedor por motor, para
+  el dia a dia.
+- Full-size (`pnpm infra up:full-size`): los clusters de abajo. Se usa
+  para la demo y defensa de N/R/W, materializando los numeros de la
+  Actividad 4. Para volver al liviano: `pnpm infra nuke` (con un solo
+  nodo no hay mayoria) y reseed.
 
-Compose con dos profiles:
+### MongoDB: replica set
 
-- Liviano (por defecto, `pnpm infra up`): un contenedor por motor. Para
-  el dia a dia. Mongo corre igual como replica set de un miembro.
-- Full-size (`pnpm infra up:full-size`): Cassandra x3 (RF=3), Mongo
-  replica set x3 y Redis Cluster x4. Materializa los numeros de la
-  Actividad 4: N3 R2 W2 para estado de instancia (write y read concern
-  majority en el replica set) y N3 R1 W1 o QUORUM por operacion en
-  Cassandra, como en la parte E de la Actividad 6. Se usa para la demo
-  y defensa de N/R/W. Para volver al liviano: `pnpm infra nuke` (con un
-  solo nodo no hay mayoria) y reseed.
+Pineado en la version 7: la imagen `mongo:8` segfaultea al minuto de
+arrancar en la maquina de desarrollo (exit 139).
 
-El Redis del full-size es un cluster de 3 masters mas 1 replica del
-primero. Lo que demuestra no es N/R/W (Redis replica asincronico, con
-un solo nodo que escribe por slot) sino las otras dos patas del
+Corre siempre como replica set `rs0`, incluso en el profile liviano con
+un solo miembro: asi la conexion y el comportamiento del driver no
+cambian entre profiles. En full-size son 3 miembros (puertos 27017 a
+27019); un servicio de init idempotente suma los miembros que falten y
+queda dormido con healthcheck (un one-off que termina rompe
+`up --wait`). Con 3 miembros se materializa el N3 R2 W2 de la Actividad
+4 para definiciones e instancias: write concern majority (2 de 3) y
+lectura del primario. El backend se conecta con `directConnection`
+porque el replica set anuncia hostnames internos de Docker.
+
+### Redis: cluster de 3 masters + 1 replica
+
+En liviano es un single-node comun. En full-size es un Redis Cluster de
+3 masters (puertos 7001 a 7003) mas 1 replica del primero (7004), creado
+por un servicio de init que reparte los slots y agrega la replica solo
+si faltan. Los nodos van en red de host: en modo cluster cada nodo
+anuncia su IP para el gossip y las redirecciones MOVED, y con red bridge
+esas IPs no se alcanzan desde el backend, que corre en el host.
+
+Lo que este cluster demuestra no es N/R/W (Redis replica asincronico,
+con un solo nodo que escribe por slot) sino las otras dos patas del
 distribuido: sharding y failover. Las keys llevan hash tag por tenant
-(`instance_state:{tenant}:...`), asi todas las keys de un tenant caen
-en el mismo slot y cada tenant vive entero en un shard. Si se mata el
-primer master, los otros dos votan y la replica se promueve sola en
-unos segundos; el cliente del backend redescubre la topologia y sigue.
-En el profile liviano Redis queda single-node, y el backend elige
-cliente comun o cluster segun la variable `REDIS_CLUSTER_NODES`.
+(`instance_state:{tenant}:...`), asi todas las keys de un tenant caen en
+el mismo slot y cada tenant vive entero en un shard. Si se mata el
+primer master, los otros dos votan y la replica se promueve sola en unos
+segundos; el cliente del backend redescubre la topologia y sigue. El
+backend elige cliente comun o cluster segun la variable
+`REDIS_CLUSTER_NODES`.
 
-InfluxDB queda single-node siempre: la edicion OSS no clusteriza. El N=2
-de metricas de la Actividad 4 se defiende como analisis conceptual, que
-es el nivel que la consigna exige (no pide un distribuido real).
+### Cassandra: ring de 3 nodos
+
+En liviano un solo nodo con RF=1. En full-size un ring de 3 nodos con
+RF=3 sobre el keyspace `flowops` (el backend lo crea o ajusta segun
+`CASSANDRA_RF`). Los nodos extra se unen al ring de a uno, con
+`depends_on` encadenado: Cassandra no banca bootstraps simultaneos.
+
+La consistencia se elige por operacion, como en la parte E de la
+Actividad 6: los eventos se escriben con ONE (append masivo, prioriza
+throughput; la PK tenant + instancia + paso hace el insert idempotente)
+y el historial de una instancia se lee con QUORUM (alimenta decisiones,
+no se quiere una replica atrasada). Es el N3 W1 de eventos de la
+Actividad 4, con la lectura subida de R1 a quorum para ese caso puntual.
+
+### InfluxDB: single-node
+
+Single-node siempre: la edicion OSS no clusteriza. El N=2 de metricas de
+la Actividad 4 se defiende como analisis conceptual, que es el nivel que
+la consigna exige (no pide un distribuido real).
 
 ## Backend
 
