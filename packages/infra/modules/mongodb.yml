@@ -81,6 +81,21 @@ services:
       timeout: 10s
       retries: 30
 
+  # Visor web de MongoDB para la demo. directConnection evita la
+  # discovery del replica set y se conecta directo al miembro.
+  mongo-express:
+    image: mongo-express:latest
+    container_name: flowops-mongo-express
+    profiles: ["tools"]
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: "mongodb://mongodb:27017/?directConnection=true"
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
 volumes:
   mongodb_data:
   mongodb2_data:

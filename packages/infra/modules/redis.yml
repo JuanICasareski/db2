@@ -12,5 +12,19 @@ services:
       timeout: 5s
       retries: 10
 
+  # Visor web de Redis para la demo. Se autoconecta a la instancia por
+  # REDIS_HOSTS, asi muestra las keys sin cargar la conexion a mano.
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: flowops-redis-commander
+    profiles: ["tools"]
+    ports:
+      - "8082:8081"
+    environment:
+      REDIS_HOSTS: "local:redis:6379"
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   redis_data:

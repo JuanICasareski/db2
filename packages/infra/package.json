@@ -7,6 +7,10 @@
     "down": "docker compose --profile full-size down",
     "nuke": "docker compose --profile full-size down -v",
     "ps": "docker compose --profile full-size ps",
-    "logs": "docker compose --profile full-size logs -f"
+    "logs": "docker compose --profile full-size logs -f",
+    "view:influxdb": "docker compose up -d --wait influxdb && echo 'InfluxDB UI -> http://localhost:8086 (user flowops / pass flowops123)' && xdg-open http://localhost:8086",
+    "view:mongodb": "docker compose --profile tools up -d --wait mongodb mongo-express && echo 'Mongo Express -> http://localhost:8081' && xdg-open http://localhost:8081",
+    "view:redis": "docker compose --profile tools up -d --wait redis redis-commander && echo 'Redis Commander -> http://localhost:8082' && xdg-open http://localhost:8082",
+    "view:cassandra": "docker compose up -d --wait cassandra && docker exec -it flowops-cassandra cqlsh"
   }
 }
